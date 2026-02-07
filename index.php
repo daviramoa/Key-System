@@ -1,18 +1,48 @@
 <?php
 header("Content-Type: application/json");
 
-// tenta GET
-$key = $_GET["key"] ?? null;
-$username = $_GET["username"] ?? null;
+$keysFile = "keys.json";
+$keys = json_decode(file_get_contents($keysFile), true);
 
-// tenta POST JSON
-if (!$key || !$username) {
-    $data = json_decode(file_get_contents("php://input"), true);
-    $key = $key ?? $data["key"] ?? null;
-    $username = $username ?? $data["username"] ?? null;
+// gera key nova
+function generateKey() {
+    return base64_encode(random_bytes(16));
 }
 
-// se ainda não tiver key ou username
+// salva no arquivo
+function saveKeys($keys, $file) {
+    file_put_contents($file, json_encode($keys, JSON_PRETTY_PRINT));
+}
+
+// ============================
+// GERAR KEY
+// ============================
+if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET["generate"])) {
+    $newKey = generateKey();
+
+    $keys[] = [
+        "key" => $newKey,
+        "username" => null,
+        "used" => false
+    ];
+
+    saveKeys($keys, $keysFile);
+
+    echo json_encode([
+        "success" => true,
+        "key" => $newKey
+    ]);
+    exit;
+}
+
+// ============================
+// VALIDAR KEY + USERNAME
+// ============================
+$data = json_decode(file_get_contents("php://input"), true);
+
+$key = $data["key"] ?? null;
+$username = $data["username"] ?? null;
+
 if (!$key || !$username) {
     echo json_encode([
         "success" => false,
@@ -21,29 +51,29 @@ if (!$key || !$username) {
     exit;
 }
 
-// KEYS VÁLIDAS
-$validKeys = [
-    "U3RldmVKb3Rhcm8=",
-    "RHZ6aW5Hb2RsZXNzRGVtb24=",
-    "S2V5QWRtaW5WZXJ5Z29vZA=="
-];
+foreach ($keys as &$k) {
+    if ($k["key"] === $key) {
 
-// Lista de usernames válidos (exemplo)
-$validUsers = [
-    "SteveJotaro",
-    "DVzinGodlessDemon",
-    "AdminVerygood"
-];
+        if ($k["used"]) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Key já usada"
+            ]);
+            exit;
+        }
 
-// valida key + username
-if (in_array($key, $validKeys) && in_array($username, $validUsers)) {
-    echo json_encode([
-        "success" => true,
-        "message" => "Key e username válidos"
-    ]);
-} else {
-    echo json_encode([
-        "success" => false,
-        "message" => "Key ou username inválido"
-    ]);
+        $k["used"] = true;
+        $k["username"] = $username;
+        saveKeys($keys, $keysFile);
+
+        echo json_encode([
+            "success" => true
+        ]);
+        exit;
+    }
 }
+
+echo json_encode([
+    "success" => false,
+    "message" => "Key inválida"
+]);
