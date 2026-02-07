@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: key-system
+    env: docker
+    plan: free
+    autoDeploy: true
