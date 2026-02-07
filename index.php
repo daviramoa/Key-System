@@ -1,15 +1,17 @@
 <?php
 header("Content-Type: application/json");
 
-$keys = [
-    "ABC-123-XYZ",
-    "SINTAXE-KEY-001",
-    "FREE-KEY-2026"
-];
+// tenta GET
+$key = $_GET["key"] ?? null;
 
-$data = json_decode(file_get_contents("php://input"), true);
+// tenta POST JSON
+if (!$key) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $key = $data["key"] ?? null;
+}
 
-if (!isset($data["key"])) {
+// se ainda não tiver key
+if (!$key) {
     echo json_encode([
         "success" => false,
         "message" => "Key not provided"
@@ -17,12 +19,13 @@ if (!isset($data["key"])) {
     exit;
 }
 
-$key = trim($data["key"]);
+// KEYS VÁLIDAS
+$validKeys = [
+    "ABC-123-XYZ"
+];
 
-if (in_array($key, $keys)) {
-    echo json_encode([
-        "success" => true
-    ]);
+if (in_array($key, $validKeys)) {
+    echo json_encode(["success" => true]);
 } else {
     echo json_encode([
         "success" => false,
