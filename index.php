@@ -21,7 +21,9 @@ if (!$key) {
 
 // KEYS VÁLIDAS
 $validKeys = [
-    "ABC-123-XYZ"
+    "U3RldmVKb3Rhcm8=",
+    "RHZ6aW5Hb2RsZXNzRGVtb24=",
+    "S2V5QWRtaW5WZXJ5Z29vZA=="
 ];
 
 if (in_array($key, $validKeys)) {
