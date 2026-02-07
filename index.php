@@ -1,70 +1,64 @@
 <?php
 header("Content-Type: application/json");
 
-$keysFile = "keys.json";
+$keysFile = __DIR__ . "/keys.json";
+
+/* =========================
+   CRIA O ARQUIVO SE NÃO EXISTIR
+========================= */
+if (!file_exists($keysFile)) {
+    file_put_contents($keysFile, json_encode([]));
+}
+
+/* =========================
+   LÊ AS KEYS
+========================= */
 $keys = json_decode(file_get_contents($keysFile), true);
-
-// gera key nova
-function generateKey() {
-    return base64_encode(random_bytes(16));
+if (!is_array($keys)) {
+    $keys = [];
 }
 
-// salva no arquivo
-function saveKeys($keys, $file) {
-    file_put_contents($file, json_encode($keys, JSON_PRETTY_PRINT));
-}
-
-// ============================
-// GERAR KEY
-// ============================
-if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET["generate"])) {
-    $newKey = generateKey();
+/* =========================
+   GERAR KEY (GET)
+========================= */
+if (isset($_GET["generate"])) {
+    $key = base64_encode(random_bytes(16));
 
     $keys[] = [
-        "key" => $newKey,
-        "username" => null,
+        "key" => $key,
         "used" => false
     ];
 
-    saveKeys($keys, $keysFile);
+    file_put_contents($keysFile, json_encode($keys, JSON_PRETTY_PRINT));
 
     echo json_encode([
         "success" => true,
-        "key" => $newKey
+        "key" => $key
     ]);
     exit;
 }
 
-// ============================
-// VALIDAR KEY + USERNAME
-// ============================
+/* =========================
+   VALIDAR KEY (POST)
+========================= */
 $data = json_decode(file_get_contents("php://input"), true);
-
-$key = $data["key"] ?? null;
+$keyInput = $data["key"] ?? null;
 $username = $data["username"] ?? null;
 
-if (!$key || !$username) {
+if (!$keyInput || !$username) {
     echo json_encode([
         "success" => false,
-        "message" => "Key ou username não fornecido"
+        "message" => "Key ou username não enviado"
     ]);
     exit;
 }
 
 foreach ($keys as &$k) {
-    if ($k["key"] === $key) {
-
-        if ($k["used"]) {
-            echo json_encode([
-                "success" => false,
-                "message" => "Key já usada"
-            ]);
-            exit;
-        }
-
+    if ($k["key"] === $keyInput && !$k["used"]) {
         $k["used"] = true;
         $k["username"] = $username;
-        saveKeys($keys, $keysFile);
+
+        file_put_contents($keysFile, json_encode($keys, JSON_PRETTY_PRINT));
 
         echo json_encode([
             "success" => true
@@ -75,5 +69,5 @@ foreach ($keys as &$k) {
 
 echo json_encode([
     "success" => false,
-    "message" => "Key inválida"
+    "message" => "Key inválida ou já usada"
 ]);
