@@ -1,26 +1,30 @@
 <?php
+// =========================
+// CONFIGURAÇÃO INICIAL
+// =========================
+error_reporting(0); // evita warnings
 header("Content-Type: application/json");
 
 $keysFile = __DIR__ . "/keys.json";
 
-/* =========================
-   CRIA O ARQUIVO SE NÃO EXISTIR
-========================= */
+// =========================
+// CRIA O ARQUIVO SE NÃO EXISTIR
+// =========================
 if (!file_exists($keysFile)) {
     file_put_contents($keysFile, json_encode([]));
 }
 
-/* =========================
-   LÊ AS KEYS
-========================= */
+// =========================
+// LÊ AS KEYS EXISTENTES
+// =========================
 $keys = json_decode(file_get_contents($keysFile), true);
 if (!is_array($keys)) {
     $keys = [];
 }
 
-/* =========================
-   GERAR KEY (GET)
-========================= */
+// =========================
+// GERAR KEY (GET)
+// =========================
 if (isset($_GET["generate"])) {
     $key = base64_encode(random_bytes(16));
 
@@ -38,9 +42,9 @@ if (isset($_GET["generate"])) {
     exit;
 }
 
-/* =========================
-   VALIDAR KEY (POST)
-========================= */
+// =========================
+// VALIDAR KEY (POST)
+// =========================
 $data = json_decode(file_get_contents("php://input"), true);
 $keyInput = $data["key"] ?? null;
 $username = $data["username"] ?? null;
